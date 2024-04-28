@@ -7,7 +7,7 @@
 #include <ctime>
 #include "TaskMes_m.h"  // Include the generated header file for your message class
 #include "GossipMessage_m.h"  // Include the generated header file for your message class
-
+#include <fstream>
 
 using namespace omnetpp;
 
@@ -24,7 +24,7 @@ class Client : public cSimpleModule
 
 
     int noOfRounds = 2;
-    std::string task[2] = {"abcdeef", "aaaaaaaa"};
+    std::string task[2] = {"abcdeefasdasdsad", "aaaaaasdasdsadaa"};
 
 
     std::vector<std::vector<std::pair<int,int>>> serverResponses;
@@ -37,18 +37,34 @@ class Client : public cSimpleModule
     int numServers;
     int numClients;
 
+    int id;
+
 };
 
 Define_Module(Client);
 
-void createLogFile(int index){
-    // Client_Log_Index
-    // int Index = getIndex();
+void createLogFile(std::string personType ,int Index){
+    std::string filename = personType + "_Log_" + std::to_string(Index) + ".txt";
+    std::ofstream logfile(filename);
+    if (logfile.is_open()) {
+        std::cout << "Log file created: " << filename << std::endl;
+        logfile.close();
+    } else {
+        std::cerr << "Error: Unable to create log file." << std::endl;
+    }
 }
 
-void writeToLogFile(std::string output){
-
+void writeToLogFile(std::string personType, std::string output, int personId){
+    std::string filename = personType + "_Log_" + std::to_string(personId) + ".txt";
+    std::ofstream logfile(filename, std::ios_base::app); // Open the file in append mode
+    if (logfile.is_open()) {
+        logfile << output << std::endl; // Write the output to the file
+        logfile.close();
+    } else {
+        std::cerr << "Error: Unable to open log file for writing." << std::endl;
+    }
 }
+
 
 int generateRandomNumber(int numServers) {
     std::random_device rd;
@@ -108,9 +124,13 @@ void Client::initialize()
 {
     numServers = par("numServers").intValue();
     numClients = par("numClients").intValue();
+    id = par("Id").intValue();
 
     serverScores.resize(numServers, 0);
     serverResponses.resize(numServers);  // Number of Subtasks
+
+    createLogFile("ClientResponses", id);
+    createLogFile("ClientGossips", id);
 
     performTask1();
 }
@@ -208,8 +228,8 @@ void Client::distributeServerScores()
 {
     std::string scores = serializeScores(serverScores);
     for(int client = 0; client < numClients; client++){
-        if(client != getIndex()){
-            GossipMessage *msg = new GossipMessage("Task1Gossip");
+        if(client != id){
+            GossipMessage *msg = new GossipMessage("Gossip");
             msg->setText(scores.c_str());
             msg->setTaskId(currentRound);
 
@@ -238,7 +258,8 @@ void Client::handleMessage(cMessage *msg)
 {
     if (dynamic_cast<TaskMes*>(msg) != nullptr) {
         TaskMes *myMsg = check_and_cast<TaskMes*>(msg);
-        int clientId = getIndex();
+        int clientId = id;
+
 
         cGate *arrivalGate = myMsg->getArrivalGate();
         int serverId = arrivalGate->getIndex();
@@ -246,11 +267,14 @@ void Client::handleMessage(cMessage *msg)
         int taskId = myMsg->getTaskId();
         int subTaskId = myMsg->getSubTaskId();
 
+        std::string logMessage = "";
 
-        EV_INFO << "Query Response, From Server-" << serverId << ", To Client-" << clientId << ", Task-" << taskId << ", SubTask-" << subTaskId << ", Response:" << myMsg->getText()<< ", Timestamp:" << myMsg->getTimestamp() <<endl;
+        logMessage = "Query Response, From Server-" + std::to_string(serverId) + ", To Client-" + std::to_string(clientId) + ", Task-" + std::to_string(taskId) + ", SubTask-" + std::to_string(subTaskId) + ", Response:" + myMsg->getText() + ", Timestamp:" + myMsg->getTimestamp();
 
-        // string output = "";
-        // writeToLogFile(output, clientId);
+        EV_INFO << logMessage << endl;
+
+        // Write the output to the log file
+        writeToLogFile("ClientResponses",logMessage, clientId);
 
 
         serverResponses[subTaskId].push_back({serverId, std::stoi(myMsg->getText())});
@@ -263,17 +287,21 @@ void Client::handleMessage(cMessage *msg)
     }
     else if(dynamic_cast<GossipMessage*>(msg) != nullptr){
         GossipMessage *myMsg = check_and_cast<GossipMessage*>(msg);
-        int receiverId = getIndex();
+        int receiverId = id;
 
         cGate *arrivalGate = myMsg->getArrivalGate();
         int senderId = arrivalGate->getIndex();
 
         int taskId = myMsg->getTaskId();
 
+        std::string logMessage = "";
 
-        EV_INFO << "Gossip, From Client-" << senderId << ", To Client-" << receiverId << ", Task-" << taskId << ", Scores:" << myMsg->getText() << ", Timestamp:" << myMsg->getTimestamp() <<endl;
-        // string output = "";
-        // writeToLogFile(output, receiverId);
+        logMessage = "Gossip, From Client-" + std::to_string(senderId) + ", To Client-" + std::to_string(receiverId) + ", Task-" + std::to_string(taskId) + ", Scores:" + myMsg->getText() + ", Timestamp:" + myMsg->getTimestamp();
+
+
+        EV_INFO << logMessage <<endl;
+
+        writeToLogFile("ClientGossips",logMessage, receiverId);
 
 
         clientResponseCount++;

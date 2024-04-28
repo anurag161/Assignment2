@@ -1,0 +1,8 @@
+Gossip, From Client-0, To Client-3, Task-0, Scores:2_2_1_, Timestamp:19:11:05
+Gossip, From Client-1, To Client-3, Task-0, Scores:3_1_2_, Timestamp:19:11:07
+Gossip, From Client-2, To Client-3, Task-0, Scores:1_2_3_, Timestamp:19:11:09
+Gossip, From Client-4, To Client-3, Task-0, Scores:1_3_2_, Timestamp:19:11:12
+Gossip, From Client-4, To Client-3, Task-1, Scores:1_5_4_, Timestamp:19:11:38
+Gossip, From Client-0, To Client-3, Task-1, Scores:1_4_3_, Timestamp:19:11:40
+Gossip, From Client-1, To Client-3, Task-1, Scores:1_5_4_, Timestamp:19:11:42
+Gossip, From Client-2, To Client-3, Task-1, Scores:1_5_4_, Timestamp:19:11:43
